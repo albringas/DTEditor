@@ -2,7 +2,22 @@
 
 class DTEditor
 {
-    public function ajax($tabla,$post,$idfield){
+
+    public function validate($datos,$options=array()){
+        $ret = array();
+        if (isset($options['required'])){
+            foreach($options['required'] as $k=>$v){
+                if (isset($datos[$v])){
+                    if ($datos[$v]==""){
+                        $ret['fieldErrors'][] = array("name"=>$v,"status"=>"Debes capturar un valor para este campo.");
+                    }
+                }
+            }
+        }
+        return $ret;
+    }
+
+    public function ajax($tabla,$post,$idfield,$options=array()){
 
         $CI =& get_instance();
         $CI->load->database();
@@ -12,16 +27,16 @@ class DTEditor
         $database = $CI->db->database;
         $action = $post['action'];
         if ($action=="create"){
-           // print_r($post['data'][0]);
+            // print_r($post['data'][0]);
             $datos = $post['data'][0];
-            if ($datos['nombre']==""){
-                $ret['fieldErrors'][] = array("name"=>"nombre",
-                    "status"=>"Debes capturar el nombre");
+            $val = $this->validate($datos, $options);
+            if (count($val)>0){
+                $ret = $val;
             }
             else {
-            $CI->db->insert($tabla,$datos);
-            $ret = $post['data'][0];
-            $ret['DT_rowId'] = $ret[$idfield];
+                $CI->db->insert($tabla,$datos);
+                $ret = $post['data'][0];
+                $ret['DT_rowId'] = $ret[$idfield];
             }
 
             return json_encode($ret);
@@ -40,7 +55,7 @@ class DTEditor
             $id = $keys[0];
 
             $CI->db->query("delete from " . $tabla . " where " .
-                  $idfield . "='" . $id . "'");
+                $idfield . "='" . $id . "'");
 
 
             return "{ }";
