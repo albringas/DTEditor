@@ -17,6 +17,12 @@ class DTEditor
         return $ret;
     }
 
+    public function get_id_from_data($post){
+        $keys = array_keys($post['data']);
+        $id = $keys[0];
+        return $id;
+    }
+
     public function ajax($tabla,$post,$idfield,$options=array()){
 
         $CI =& get_instance();
@@ -46,9 +52,14 @@ class DTEditor
             $id = $keys[0];
             $CI->db->where($idfield,(string) $id);
             $CI->db->update($tabla,$post['data'][$id]);
-            $ret = $post['data'][$id];
-            $ret['DT_rowId'] = $ret[$idfield];
-            return json_encode($ret);
+            $q = $CI->db->query("select * from " . $tabla . " where " . $idfield . "='" . $id . "'");
+            $a = $q->result_array();
+            $ret = $a[0];
+
+            $ret['DT_RowId'] = $id;
+            $data[] = $ret;
+            $r = array("data"=>$data);
+            return json_encode($r);
         }
         if ($action=="remove"){
             $keys = array_keys($post['data']);
